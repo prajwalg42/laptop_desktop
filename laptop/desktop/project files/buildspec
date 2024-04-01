@@ -1,0 +1,32 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo "Installing Python, Django, and pip"
+      - apt-get update
+      - apt-get install -y python3 python3-pip
+      - pip3 install Django
+
+      - echo "Installing project dependencies from requirements.txt"
+      - pip3 install -r requirements.txt
+
+  build:
+    commands:
+      - echo "Running migrations"
+      - python3 manage.py makemigrations
+      - python3 manage.py migrate
+
+post_build:
+  commands:
+    - echo "Build completed on $(date)"
+    - zip -r django-todo-list.zip .
+    - aws s3 cp django-todo-list.zip s3://django-todo-app-cicd/django-todo-app
+    - nohup python3 manage.py runserver 0.0.0.0:8000 &
+    - echo "Django server started in the background"
+
+artifacts:
+  files: '**/*'
+  base-directory: '.'
+  discard-paths: no
+
